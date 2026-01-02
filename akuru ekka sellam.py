@@ -4,7 +4,6 @@ import json
 
 st.set_page_config(page_title="අකුරු බෝල - සිංහල සෙල්ලම", page_icon="🎈", layout="wide")
 
-# CSS මගින් Graphics ලස්සන කිරීම
 st.markdown("""
 <style>
     .stApp { background-color: #f0fdf4; }
@@ -15,7 +14,7 @@ st.markdown("""
 st.markdown('<div class="main-title">🎈 අකුරු බෝල - සිංහල සෙල්ලම</div>', unsafe_allow_html=True)
 
 # අදියර දත්ත
-levels = [
+levels_list = [
     {"target": "අම්මා", "pool": ["අ","ම්","මා","ක","ල","ප","ද","ග","ඉ","ස"]},
     {"target": "පාසල", "pool": ["පා","ස","ල","ග","න","ද","අ","ක","ම","ය"]},
     {"target": "පොත", "pool": ["පො","ත","ල","ය","ක","ම","ද","න","ස","ර"]},
@@ -28,11 +27,10 @@ levels = [
     {"target": "රට", "pool": ["ර","ට","ම","ල","ක","අ","ස","න","ප","ද"]}
 ]
 
-levels_json = json.dumps(levels, ensure_ascii=False)
+levels_json = json.dumps(levels_list, ensure_ascii=False)
 
-game_html = f"""
+game_template = """
 <div id="main-container" style="display: flex; flex-direction: column; align-items: center; font-family: sans-serif; touch-action: none;">
-    
     <div id="start-screen" style="position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; border-radius: 20px;">
         <button onclick="startGame()" style="padding: 20px 40px; font-size: 22px; background: #22c55e; color: white; border: none; border-radius: 10px; cursor: pointer;">ආරම්භ කරන්න</button>
     </div>
@@ -57,50 +55,15 @@ game_html = f"""
 
 <script>
     const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
-    const allLvl = {levels_json}, tmrTxt = document.getElementById('timer');
-    const disp = document.getElementById('display'), hintTxt = document.getElementById('hint');
+    const allLvl = DATA_JSON;
+    const tmrTxt = document.getElementById('timer'), disp = document.getElementById('display'), hintTxt = document.getElementById('hint');
     
     let clickSnd = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
     let winSnd = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
 
     let curIdx = 0, target = "", input = "", balls = [], gameStarted = false, timeLeft = 30, timer;
 
-    function startGame() {{ document.getElementById('start-screen').style.display='none'; gameStarted=true; init(0); draw(); }}
+    function startGame() { document.getElementById('start-screen').style.display='none'; gameStarted=true; init(0); draw(); }
 
-    function startTimer() {{
-        clearInterval(timer); timeLeft = 30; tmrTxt.innerText = "30s";
-        timer = setInterval(() => {{
-            timeLeft--; tmrTxt.innerText = timeLeft + "s";
-            if(timeLeft <= 0) {{ clearInterval(timer); alert("කාලය අවසන්! නැවත උත්සාහ කරන්න."); init(curIdx); }}
-        }}, 1000);
-    }}
-
-    function init(idx) {{
-        curIdx = idx; target = allLvl[idx].target; input = "";
-        document.getElementById('lvl-txt').innerText = "අදියර: " + (idx + 1);
-        hintTxt.innerText = target; disp.innerText = "";
-        startTimer();
-        balls = allLvl[idx].pool.map(c => ({{
-            x: Math.random()*700+50, y: Math.random()*400+50,
-            dx: (Math.random()-0.5)*4, dy: (Math.random()-0.5)*4,
-            char: c, r: 45
-        }}));
-    }}
-
-    function draw() {{
-        ctx.clearRect(0,0,800,500);
-        balls.forEach(b => {{
-            ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-            ctx.fillStyle = "#22c55e"; ctx.fill();
-            ctx.strokeStyle = "#14532d"; ctx.lineWidth = 3; ctx.stroke();
-            ctx.fillStyle = "white"; ctx.font = "bold 30px Arial"; ctx.textAlign="center";
-            ctx.fillText(b.char, b.x, b.y+12);
-            if(b.x+b.r > 800 || b.x-b.r < 0) b.dx *= -1; if(b.y+b.r > 500 || b.y-b.r < 0) b.dy *= -1;
-            b.x += b.dx; b.y += b.dy;
-        }});
-        requestAnimationFrame(draw);
-    }}
-
-    function handle(e) {{
-        if(!gameStarted) return; e.preventDefault();
-        const r = canvas.getBoundingClientRect(), sx = 800/r.width, sy = 500/r.height
+    function startTimer() {
+        clearInterval(
