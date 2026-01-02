@@ -83,6 +83,8 @@ game_html = f"""
     let winSound = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
 
     let curIdx = 0, target = "", input = "", balls = [], gameStarted = false;
+    // වර්ණ වර්ග 3
+    const colors = ["#22c55e", "#3b82f6", "#ef4444"]; 
 
     function startGame() {{
         document.getElementById('start-screen').style.display = 'none';
@@ -103,7 +105,8 @@ game_html = f"""
             balls.push({{
                 x: Math.random()*700+50, y: Math.random()*400+50,
                 dx: (Math.random()-0.5)*4, dy: (Math.random()-0.5)*4,
-                char: char, r: 40
+                char: char, r: 40,
+                color: colors[Math.floor(Math.random() * colors.length)] // අහඹු වර්ණයක් තෝරා ගැනීම
             }});
         }});
     }}
@@ -112,51 +115,5 @@ game_html = f"""
         ctx.clearRect(0,0,800,500);
         balls.forEach(b => {{
             ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-            ctx.fillStyle = "#22c55e"; ctx.fill();
-            ctx.strokeStyle = "#14532d"; ctx.lineWidth = 3; ctx.stroke();
-            ctx.fillStyle = "white"; ctx.font = "bold 28px Arial"; ctx.textAlign="center";
-            ctx.fillText(b.char, b.x, b.y+10);
-            
-            if(b.x+b.r > 800 || b.x-b.r < 0) b.dx *= -1;
-            if(b.y+b.r > 500 || b.y-b.r < 0) b.dy *= -1;
-            b.x += b.dx; b.y += b.dy;
-        }});
-        requestAnimationFrame(draw);
-    }}
-
-    canvas.onclick = (e) => {{
-        if(!gameStarted) return;
-        const r = canvas.getBoundingClientRect();
-        const scaleX = 800 / r.width;
-        const scaleY = 500 / r.height;
-        const mx = (e.clientX - r.left) * scaleX;
-        const my = (e.clientY - r.top) * scaleY;
-
-        balls.forEach(b => {{
-            if(Math.sqrt((mx-b.x)**2 + (my-b.y)**2) < b.r) {{
-                clickSound.currentTime = 0; clickSound.play();
-                let next = input + b.char;
-                if(target.startsWith(next)) {{
-                    input = next; document.getElementById('display').innerText = input;
-                    if(input === target) {{
-                        winSound.play();
-                        setTimeout(() => {{ 
-                            if(curIdx < 19) init(curIdx+1); 
-                            else alert("විශිෂ්ටයි! ඔබ සියලුම අදියර ජයග්‍රහණය කළා!"); 
-                        }}, 800);
-                    }}
-                }} else {{
-                    document.getElementById('display').innerText = next;
-                    document.getElementById('display').style.color = "red";
-                    setTimeout(() => {{ 
-                        document.getElementById('display').innerText = input; 
-                        document.getElementById('display').style.color = "#166534"; 
-                    }}, 400);
-                }}
-            }}
-        }});
-    }};
-</script>
-"""
-
-components.html(game_html, height=750)
+            ctx.fillStyle = b.color; ctx.fill();
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
