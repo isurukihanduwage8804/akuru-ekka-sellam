@@ -2,19 +2,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 import json
 
-# 1. පිටුවේ මූලික සැකසුම්
 st.set_page_config(page_title="අකුරු බෝල - සිංහල සෙල්ලම", page_icon="🎈", layout="centered")
 
-st.markdown("""
-<style>
-    .stApp { background-color: #f0fdf4; }
-    .title-text { color: #166534; text-align: center; font-weight: bold; margin-bottom: 10px; }
-</style>
-""", unsafe_allow_html=True)
+st.markdown('<h1 style="color: #166534; text-align: center;">🎈 අකුරු බෝල - සිංහල සෙල්ලම</h1>', unsafe_allow_html=True)
 
-st.markdown('<h1 class="title-text">🎈 අකුරු බෝල - සිංහල සෙල්ලම</h1>', unsafe_allow_html=True)
-
-# 2. අදියර 20 සඳහා දත්ත
+# අදියර 20 සඳහා දත්ත
 levels = [
     {"target": "අම්මා", "pool": ["අ","ම්","මා","ක","ල","ප","ද","ග","ඉ","ස"]},
     {"target": "පාසල", "pool": ["පා","ස","ල","ග","න","ද","අ","ක","ම","ය"]},
@@ -34,70 +26,74 @@ levels = [
     {"target": "දොඩම්", "pool": ["දො","ඩ","ම්","ක","ම","ල","ස","න","ප","ද"]},
     {"target": "කෙසෙල්", "pool": ["කෙ","සෙ","ල්","ල","ම","න","ප","ග","ව","අ"]},
     {"target": "පෑන", "pool": ["පෑ","න","ල","ක","ම","ස","ය","ර","ව","ද"]},
-    {"target": "වෙරළ", "pool": ["වෙ","ර","ළ","ක","ම","ස","න","ප","ල","ග"]},
+    {"target": "වෙරළ", "pool": ["වෙර","ළ","ක","ම","ස","න","ප","ල","ග","ව"]},
     {"target": "ලංකාව", "pool": ["ලං","කා","ව","ක","ම","ස","න","ප","ල","ග"]}
 ]
 
 levels_json = json.dumps(levels, ensure_ascii=False)
 
-# 3. Game Engine (JavaScript & HTML)
-# මෙහිදී මම String එක කැඩීමෙන් තොරව එකවරම ලියා ඇත.
-game_html = """
-<div id="game-wrapper" style="text-align: center; font-family: 'Arial', sans-serif;">
-    <div style="background: white; padding: 15px; border-radius: 15px; border: 2px solid #2e7d32; margin-bottom: 10px;">
-        <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 5px;">
-            <h3 id="level-indicator" style="color: #2e7d32; margin: 0;">අදියර: 1 / 20</h3>
-            <div style="color: #15803d; font-weight: bold; font-size: 18px;">
-                සාදන්න: <span id="target-hint" style="color: #c2410c; background: #ffedd5; padding: 2px 8px; border-radius: 5px;"></span>
-            </div>
-        </div>
-        <div id="word-display" style="font-size: 45px; min-height: 70px; color: #1b5e20; background: #f9fafb; border: 3px dashed #2e7d32; border-radius: 15px; margin: 5px auto; width: 400px; display: flex; align-items: center; justify-content: center; font-weight: bold;"></div>
+# HTML සහ JavaScript කොටස ඉතාම සරලව
+game_html = f"""
+<div id="game-wrapper" style="text-align: center; font-family: sans-serif;">
+    <div style="background: white; padding: 10px; border: 2px solid green; border-radius: 10px;">
+        <h4 id="lvl-txt">අදියර: 1</h4>
+        <p>සාදන්න: <b id="hint" style="color: orange;"></b></p>
+        <div id="display" style="font-size: 40px; min-height: 60px; background: #eee; border-radius: 10px; margin: 10px 0;"></div>
     </div>
-    <canvas id="gameCanvas" width="550" height="380" style="background: radial-gradient(#fff, #e8f5e9); border-radius: 20px; border: 5px solid #2e7d32; cursor: pointer;"></canvas>
+    <canvas id="c" width="500" height="350" style="border: 3px solid green; border-radius: 10px; background: white;"></canvas>
 </div>
-
 <script>
-    const canvas = document.getElementById('gameCanvas');
+    const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
-    const display = document.getElementById('word-display');
-    const levelText = document.getElementById('level-indicator');
-    const hintText = document.getElementById('target-hint');
-    
-    const clickSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-    const winSound = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+    const allLvl = {levels_json};
+    let curIdx = 0, target = "", input = "", balls = [];
 
-    // Python වලින් එන JSON දත්ත මෙතැනට ලැබේ
-    let allLevels = PLACEHOLDER_DATA;
-    let currentLvlIdx = 0;
-    let target = "";
-    let currentInput = "";
-    let balls = [];
+    function init(idx) {{
+        curIdx = idx; target = allLvl[idx].target; input = "";
+        document.getElementById('lvl-txt').innerText = "අදියර: " + (idx + 1);
+        document.getElementById('hint').innerText = target;
+        document.getElementById('display').innerText = "";
+        document.getElementById('display').style.color = "black";
+        balls = allLvl[idx].pool.map(c => ({{
+            x: Math.random()*400+50, y: Math.random()*250+50,
+            dx: Math.random()*2-1, dy: Math.random()*2-1,
+            char: c, r: 30
+        }}));
+    }}
+    function draw() {{
+        ctx.clearRect(0,0,500,350);
+        balls.forEach(b => {{
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+            ctx.fillStyle = "green"; ctx.fill();
+            ctx.fillStyle = "white"; ctx.font = "20px Arial"; ctx.textAlign="center";
+            ctx.fillText(b.char, b.x, b.y+7);
+            if(b.x+b.r > 500 || b.x-b.r < 0) b.dx *= -1;
+            if(b.y+b.r > 350 || b.y-b.r < 0) b.dy *= -1;
+            b.x += b.dx; b.y += b.dy;
+        }});
+        requestAnimationFrame(draw);
+    }}
+    canvas.onclick = (e) => {{
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        balls.forEach(b => {{
+            if(Math.sqrt((mx-b.x)**2 + (my-b.y)**2) < b.r) {{
+                let next = input + b.char;
+                if(target.startsWith(next)) {{
+                    input = next; document.getElementById('display').innerText = input;
+                    if(input === target) {{
+                        setTimeout(() => {{ if(curIdx < 19) init(curIdx+1); else alert("ජය!"); }}, 500);
+                    }}
+                }} else {{
+                    document.getElementById('display').innerText = next;
+                    document.getElementById('display').style.color = "red";
+                    setTimeout(() => {{ document.getElementById('display').innerText = input; document.getElementById('display').style.color = "black"; }}, 400);
+                }}
+            }}
+        }});
+    }};
+    init(0); draw();
+</script>
+"""
 
-    function initLevel(idx) {
-        currentLvlIdx = idx;
-        target = allLevels[idx].target;
-        let pool = allLevels[idx].pool;
-        currentInput = "";
-        display.innerText = "";
-        display.style.color = "#1b5e20";
-        levelText.innerText = "අදියර: " + (idx + 1) + " / 20";
-        hintText.innerText = target;
-        
-        balls = [];
-        pool.forEach(char => {
-            balls.push({
-                x: Math.random() * 450 + 50,
-                y: Math.random() * 280 + 50,
-                dx: (Math.random() - 0.5) * 3,
-                dy: (Math.random() - 0.5) * 3,
-                char: char,
-                radius: 38,
-                color: "#4caf50"
-            });
-        });
-    }
-
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        balls.forEach(b => {
-            ctx.beginPath();
+components.html(game_html, height=600)
