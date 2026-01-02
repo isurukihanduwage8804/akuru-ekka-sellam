@@ -9,14 +9,12 @@ st.markdown("""
 <style>
     .stApp { background-color: #f0fdf4; }
     .title-text { color: #166534; text-align: center; font-weight: bold; margin-bottom: 0px; }
-    .status-text { text-align: center; color: #15803d; font-weight: bold; font-size: 18px; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<h1 class="title-text">🎈 අකුරු බෝල - සිංහල සෙල්ලම</h1>', unsafe_allow_html=True)
 
 # 2. අදියර 20 සඳහා වචන (Levels Data)
-# මෙහි වචන 20ක් සහ ඒවා සෑදීමට අවශ්‍ය අකුරු 10 බැගින් ඇත
 levels = [
     {"target": "අම්මා", "pool": ["අ","ම්","මා","ක","ල","ප","ද","ග","ඉ","ස"]},
     {"target": "පාසල", "pool": ["පා","ස","ල","ග","න","ද","අ","ක","ම","ය"]},
@@ -41,7 +39,8 @@ levels = [
 ]
 
 # Session state පාලනය
-if 'lvl' not in st.session_state: st.session_state.lvl = 0
+if 'lvl' not in st.session_state: 
+    st.session_state.lvl = 0
 
 current_data = levels[st.session_state.lvl]
 
@@ -49,7 +48,7 @@ current_data = levels[st.session_state.lvl]
 game_code = f"""
 <div style="text-align: center; font-family: sans-serif;">
     <div style="margin-bottom: 15px;">
-        <span style="font-size: 20px; font-weight: bold; color: #2e7d32;">අදියර: {st.session_state.lvl + 1} / 20</span><br>
+        <span style="font-size: 22px; font-weight: bold; color: #2e7d32;">අදියර: {st.session_state.lvl + 1} / 20</span><br>
         <div id="word-display" style="font-size: 35px; min-height: 50px; color: #1b5e20; background: #ffffff; border: 3px solid #2e7d32; border-radius: 10px; margin: 10px auto; width: 300px; padding: 5px;"></div>
     </div>
     
@@ -85,7 +84,6 @@ game_code = f"""
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         balls.forEach(b => {{
-            // බෝලය ඇඳීම
             ctx.beginPath();
             ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
             ctx.fillStyle = b.color;
@@ -94,13 +92,11 @@ game_code = f"""
             ctx.lineWidth = 3;
             ctx.stroke();
             
-            // අකුර
             ctx.fillStyle = "white";
             ctx.font = "bold 22px Arial";
             ctx.textAlign = "center";
             ctx.fillText(b.char, b.x, b.y + 8);
             
-            // චලනය
             if(b.x + b.radius > canvas.width || b.x - b.radius < 0) b.dx *= -1;
             if(b.y + b.radius > canvas.height || b.y - b.radius < 0) b.dy *= -1;
             b.x += b.dx;
@@ -123,9 +119,8 @@ game_code = f"""
                 
                 if(currentInput === target) {{
                     winSound.play();
-                    setTimeout(() => {{ 
-                        window.parent.postMessage({{type: 'WIN'}}, '*');
-                    }}, 500);
+                    alert("විශිෂ්ටයි! ' " + target + " ' නිවැරදියි.");
+                    // මෙහිදී streamlit එකට පණිවිඩයක් යැවිය හැක, නමුත් දැනට alert එකක් පමණක් පෙන්වමු.
                 }} else if (!target.startsWith(currentInput)) {{
                     currentInput = "";
                     display.innerText = "";
@@ -138,16 +133,13 @@ game_code = f"""
 </script>
 """
 
-# JavaScript එකෙන් එන පණිවිඩය (Win) හඳුනා ගැනීම
-from streamlit_gsheets import GSheetsConnection # අවශ්‍ය නම් පමණක්
 components.html(game_code, height=550)
 
 # Sidebar පාලනය
 st.sidebar.title("📊 Game Status")
 st.sidebar.write(f"Level: {st.session_state.lvl + 1} / 20")
-if st.sidebar.button("ඊළඟ අදියර (Skip)"):
+if st.sidebar.button("ඊළඟ අදියරට යන්න"):
     st.session_state.lvl = (st.session_state.lvl + 1) % 20
     st.rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.info("පාවෙන බෝල මත ක්ලික් කර නිවැරදි වචනය හදන්න. වැරදුනහොත් කොටුව හිස්වනු ඇත.")
+st.sidebar.info("පාවෙන බෝල මත ක්ලික් කර නිවැරදි වචනය හදන්න.")
