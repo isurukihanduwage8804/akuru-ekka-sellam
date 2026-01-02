@@ -15,7 +15,7 @@ st.markdown("""
 st.markdown('<h1 class="title-text">🎈 අකුරු බෝල - සිංහල සෙල්ලම</h1>', unsafe_allow_html=True)
 
 # 2. අදියර 20 සඳහා දත්ත
-levels_list = [
+levels = [
     {"target": "අම්මා", "pool": ["අ","ම්","මා","ක","ල","ප","ද","ග","ඉ","ස"]},
     {"target": "පාසල", "pool": ["පා","ස","ල","ග","න","ද","අ","ක","ම","ය"]},
     {"target": "පොත", "pool": ["පො","ත","ල","ය","ක","ම","ද","න","ස","ර"]},
@@ -38,10 +38,10 @@ levels_list = [
     {"target": "ලංකාව", "pool": ["ලං","කා","ව","ක","ම","ස","න","ප","ල","ග"]}
 ]
 
-levels_json = json.dumps(levels_list, ensure_ascii=False)
+levels_json = json.dumps(levels, ensure_ascii=False)
 
 # 3. Game Engine (JavaScript & HTML)
-# Error එක මඟහරවා ගැනීමට html කේතය කොටස් වශයෙන් ලියමි
+# මෙහිදී මම String එක කැඩීමෙන් තොරව එකවරම ලියා ඇත.
 game_html = """
 <div id="game-wrapper" style="text-align: center; font-family: 'Arial', sans-serif;">
     <div style="background: white; padding: 15px; border-radius: 15px; border: 2px solid #2e7d32; margin-bottom: 10px;">
@@ -66,7 +66,8 @@ game_html = """
     const clickSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
     const winSound = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
 
-    let allLevels = """ + levels_json + """;
+    // Python වලින් එන JSON දත්ත මෙතැනට ලැබේ
+    let allLevels = PLACEHOLDER_DATA;
     let currentLvlIdx = 0;
     let target = "";
     let currentInput = "";
@@ -76,3 +77,27 @@ game_html = """
         currentLvlIdx = idx;
         target = allLevels[idx].target;
         let pool = allLevels[idx].pool;
+        currentInput = "";
+        display.innerText = "";
+        display.style.color = "#1b5e20";
+        levelText.innerText = "අදියර: " + (idx + 1) + " / 20";
+        hintText.innerText = target;
+        
+        balls = [];
+        pool.forEach(char => {
+            balls.push({
+                x: Math.random() * 450 + 50,
+                y: Math.random() * 280 + 50,
+                dx: (Math.random() - 0.5) * 3,
+                dy: (Math.random() - 0.5) * 3,
+                char: char,
+                radius: 38,
+                color: "#4caf50"
+            });
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        balls.forEach(b => {
+            ctx.beginPath();
