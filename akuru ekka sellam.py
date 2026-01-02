@@ -2,11 +2,20 @@ import streamlit as st
 import streamlit.components.v1 as components
 import json
 
-st.set_page_config(page_title="අකුරු බෝල - සිංහල සෙල්ලම", page_icon="🎈", layout="centered")
+# 1. පිටුවේ මූලික සැකසුම්
+st.set_page_config(page_title="අකුරු බෝල - සිංහල සෙල්ලම", page_icon="🎈", layout="wide")
 
-st.markdown('<h1 style="color: #166534; text-align: center;">🎈 අකුරු බෝල - සිංහල සෙල්ලම</h1>', unsafe_allow_html=True)
+# CSS මගින් පිටුවේ පෙනුම සකස් කිරීම
+st.markdown("""
+<style>
+    .stApp { background-color: #f0fdf4; }
+    .main-title { color: #166534; text-align: center; font-size: 40px; font-weight: bold; margin-bottom: 20px; }
+</style>
+""", unsafe_allow_html=True)
 
-# අදියර 20 සඳහා දත්ත
+st.markdown('<div class="main-title">🎈 අකුරු බෝල - සිංහල සෙල්ලම</div>', unsafe_allow_html=True)
+
+# 2. අදියර 20 සඳහා දත්ත
 levels = [
     {"target": "අම්මා", "pool": ["අ","ම්","මා","ක","ල","ප","ද","ග","ඉ","ස"]},
     {"target": "පාසල", "pool": ["පා","ස","ල","ග","න","ද","අ","ක","ම","ය"]},
@@ -26,74 +35,128 @@ levels = [
     {"target": "දොඩම්", "pool": ["දො","ඩ","ම්","ක","ම","ල","ස","න","ප","ද"]},
     {"target": "කෙසෙල්", "pool": ["කෙ","සෙ","ල්","ල","ම","න","ප","ග","ව","අ"]},
     {"target": "පෑන", "pool": ["පෑ","න","ල","ක","ම","ස","ය","ර","ව","ද"]},
-    {"target": "වෙරළ", "pool": ["වෙර","ළ","ක","ම","ස","න","ප","ල","ග","ව"]},
+    {"target": "වෙරළ", "pool": ["වෙ","ර","ළ","ක","ම","ස","න","ප","ල","ග"]},
     {"target": "ලංකාව", "pool": ["ලං","කා","ව","ක","ම","ස","න","ප","ල","ග"]}
 ]
 
 levels_json = json.dumps(levels, ensure_ascii=False)
 
-# HTML සහ JavaScript කොටස ඉතාම සරලව
+# 3. Game Engine (JavaScript & HTML)
 game_html = f"""
-<div id="game-wrapper" style="text-align: center; font-family: sans-serif;">
-    <div style="background: white; padding: 10px; border: 2px solid green; border-radius: 10px;">
-        <h4 id="lvl-txt">අදියර: 1</h4>
-        <p>සාදන්න: <b id="hint" style="color: orange;"></b></p>
-        <div id="display" style="font-size: 40px; min-height: 60px; background: #eee; border-radius: 10px; margin: 10px 0;"></div>
+<div id="main-container" style="display: flex; flex-direction: column; align-items: center; font-family: sans-serif;">
+    
+    <div id="start-screen" style="position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; display: flex; justify-content: center; align-items: center; border-radius: 20px;">
+        <button onclick="startGame()" style="padding: 20px 40px; font-size: 24px; background: #22c55e; color: white; border: none; border-radius: 10px; cursor: pointer;">සෙල්ලම ආරම්භ කරන්න (Start Game)</button>
     </div>
-    <canvas id="c" width="500" height="350" style="border: 3px solid green; border-radius: 10px; background: white;"></canvas>
+
+    <div style="display: flex; width: 95vw; justify-content: space-between; align-items: flex-start; gap: 20px;">
+        
+        <div style="flex: 1; background: white; padding: 20px; border-radius: 20px; border: 4px solid #16a34a; text-align: center; box-shadow: 5px 5px 15px rgba(0,0,0,0.1);">
+            <h2 id="lvl-txt" style="color: #166534; margin: 0;">අදියර: 1</h2>
+            <hr>
+            <p style="font-size: 18px; color: #666;">සාදන්න අවශ්‍ය වචනය:</p>
+            <h1 id="hint" style="color: #c2410c; background: #ffedd5; padding: 10px; border-radius: 10px; font-size: 35px;">-</h1>
+        </div>
+
+        <div style="flex: 2.5; position: relative;">
+            <div id="display" style="font-size: 50px; min-height: 80px; background: white; border: 4px dashed #16a34a; border-radius: 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #166534;"></div>
+            <canvas id="c" width="800" height="500" style="border: 5px solid #16a34a; border-radius: 20px; background: radial-gradient(#fff, #dcfce7); cursor: pointer; width: 100%;"></canvas>
+        </div>
+
+        <div style="flex: 1; background: white; padding: 20px; border-radius: 20px; border: 4px solid #16a34a; box-shadow: 5px 5px 15px rgba(0,0,0,0.1);">
+            <h3 style="color: #166534; margin-top: 0;">උපදෙස්</h3>
+            <ul style="color: #444; font-size: 16px; text-align: left; line-height: 1.6;">
+                <li>පාවෙන බෝල මත ක්ලික් කර වචනය හදන්න.</li>
+                <li>වැරදුනහොත් වචනය රතු පැහැ වේ.</li>
+                <li>නිවැරදි වූ විට ශබ්දයක් ඇසෙනු ඇත.</li>
+            </ul>
+        </div>
+    </div>
 </div>
+
 <script>
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
     const allLvl = {levels_json};
-    let curIdx = 0, target = "", input = "", balls = [];
+    
+    let clickSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+    let winSound = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+
+    let curIdx = 0, target = "", input = "", balls = [], gameStarted = false;
+
+    function startGame() {{
+        document.getElementById('start-screen').style.display = 'none';
+        gameStarted = true;
+        init(0);
+        draw();
+    }}
 
     function init(idx) {{
         curIdx = idx; target = allLvl[idx].target; input = "";
         document.getElementById('lvl-txt').innerText = "අදියර: " + (idx + 1);
         document.getElementById('hint').innerText = target;
         document.getElementById('display').innerText = "";
-        document.getElementById('display').style.color = "black";
-        balls = allLvl[idx].pool.map(c => ({{
-            x: Math.random()*400+50, y: Math.random()*250+50,
-            dx: Math.random()*2-1, dy: Math.random()*2-1,
-            char: c, r: 30
-        }}));
+        document.getElementById('display').style.color = "#166534";
+        
+        balls = [];
+        allLvl[idx].pool.forEach(char => {{
+            balls.push({{
+                x: Math.random()*700+50, y: Math.random()*400+50,
+                dx: (Math.random()-0.5)*4, dy: (Math.random()-0.5)*4,
+                char: char, r: 40
+            }});
+        }});
     }}
+
     function draw() {{
-        ctx.clearRect(0,0,500,350);
+        ctx.clearRect(0,0,800,500);
         balls.forEach(b => {{
             ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-            ctx.fillStyle = "green"; ctx.fill();
-            ctx.fillStyle = "white"; ctx.font = "20px Arial"; ctx.textAlign="center";
-            ctx.fillText(b.char, b.x, b.y+7);
-            if(b.x+b.r > 500 || b.x-b.r < 0) b.dx *= -1;
-            if(b.y+b.r > 350 || b.y-b.r < 0) b.dy *= -1;
+            ctx.fillStyle = "#22c55e"; ctx.fill();
+            ctx.strokeStyle = "#14532d"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.fillStyle = "white"; ctx.font = "bold 28px Arial"; ctx.textAlign="center";
+            ctx.fillText(b.char, b.x, b.y+10);
+            
+            if(b.x+b.r > 800 || b.x-b.r < 0) b.dx *= -1;
+            if(b.y+b.r > 500 || b.y-b.r < 0) b.dy *= -1;
             b.x += b.dx; b.y += b.dy;
         }});
         requestAnimationFrame(draw);
     }}
+
     canvas.onclick = (e) => {{
+        if(!gameStarted) return;
         const r = canvas.getBoundingClientRect();
-        const mx = e.clientX - r.left, my = e.clientY - r.top;
+        const scaleX = 800 / r.width;
+        const scaleY = 500 / r.height;
+        const mx = (e.clientX - r.left) * scaleX;
+        const my = (e.clientY - r.top) * scaleY;
+
         balls.forEach(b => {{
             if(Math.sqrt((mx-b.x)**2 + (my-b.y)**2) < b.r) {{
+                clickSound.currentTime = 0; clickSound.play();
                 let next = input + b.char;
                 if(target.startsWith(next)) {{
                     input = next; document.getElementById('display').innerText = input;
                     if(input === target) {{
-                        setTimeout(() => {{ if(curIdx < 19) init(curIdx+1); else alert("ජය!"); }}, 500);
+                        winSound.play();
+                        setTimeout(() => {{ 
+                            if(curIdx < 19) init(curIdx+1); 
+                            else alert("විශිෂ්ටයි! ඔබ සියලුම අදියර ජයග්‍රහණය කළා!"); 
+                        }}, 800);
                     }}
                 }} else {{
                     document.getElementById('display').innerText = next;
                     document.getElementById('display').style.color = "red";
-                    setTimeout(() => {{ document.getElementById('display').innerText = input; document.getElementById('display').style.color = "black"; }}, 400);
+                    setTimeout(() => {{ 
+                        document.getElementById('display').innerText = input; 
+                        document.getElementById('display').style.color = "#166534"; 
+                    }}, 400);
                 }}
             }}
         }});
     }};
-    init(0); draw();
 </script>
 """
 
-components.html(game_html, height=600)
+components.html(game_html, height=750)
