@@ -14,8 +14,8 @@ st.markdown("""
 
 st.markdown('<h1 class="title-text">🎈 අකුරු බෝල - සිංහල සෙල්ලම</h1>', unsafe_allow_html=True)
 
-# 2. අදියර 20 සඳහා වචන
-levels = [
+# 2. අදියර 20 සඳහා දත්ත
+levels_list = [
     {"target": "අම්මා", "pool": ["අ","ම්","මා","ක","ල","ප","ද","ග","ඉ","ස"]},
     {"target": "පාසල", "pool": ["පා","ස","ල","ග","න","ද","අ","ක","ම","ය"]},
     {"target": "පොත", "pool": ["පො","ත","ල","ය","ක","ම","ද","න","ස","ර"]},
@@ -38,12 +38,41 @@ levels = [
     {"target": "ලංකාව", "pool": ["ලං","කා","ව","ක","ම","ස","න","ප","ල","ග"]}
 ]
 
-levels_json = json.dumps(levels, ensure_ascii=False)
+levels_json = json.dumps(levels_list, ensure_ascii=False)
 
-html_template = """
+# 3. Game Engine (JavaScript & HTML)
+# Error එක මඟහරවා ගැනීමට html කේතය කොටස් වශයෙන් ලියමි
+game_html = """
 <div id="game-wrapper" style="text-align: center; font-family: 'Arial', sans-serif;">
     <div style="background: white; padding: 15px; border-radius: 15px; border: 2px solid #2e7d32; margin-bottom: 10px;">
         <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 5px;">
             <h3 id="level-indicator" style="color: #2e7d32; margin: 0;">අදියර: 1 / 20</h3>
             <div style="color: #15803d; font-weight: bold; font-size: 18px;">
-                සාදන්න අවශ්‍ය වචනය: <span id="target-hint" style="color: #c2410c; background: #ffedd5; padding:
+                සාදන්න: <span id="target-hint" style="color: #c2410c; background: #ffedd5; padding: 2px 8px; border-radius: 5px;"></span>
+            </div>
+        </div>
+        <div id="word-display" style="font-size: 45px; min-height: 70px; color: #1b5e20; background: #f9fafb; border: 3px dashed #2e7d32; border-radius: 15px; margin: 5px auto; width: 400px; display: flex; align-items: center; justify-content: center; font-weight: bold;"></div>
+    </div>
+    <canvas id="gameCanvas" width="550" height="380" style="background: radial-gradient(#fff, #e8f5e9); border-radius: 20px; border: 5px solid #2e7d32; cursor: pointer;"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const display = document.getElementById('word-display');
+    const levelText = document.getElementById('level-indicator');
+    const hintText = document.getElementById('target-hint');
+    
+    const clickSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+    const winSound = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+
+    let allLevels = """ + levels_json + """;
+    let currentLvlIdx = 0;
+    let target = "";
+    let currentInput = "";
+    let balls = [];
+
+    function initLevel(idx) {
+        currentLvlIdx = idx;
+        target = allLevels[idx].target;
+        let pool = allLevels[idx].pool;
