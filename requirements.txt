@@ -1,3 +1,2 @@
 streamlit
-random2
-# පින්තූර සහ ශබ්ද සඳහා අවශ්‍ය වෙනත් libraries තිබේ නම් මෙතැනට එයි
+streamlit-gsheets
